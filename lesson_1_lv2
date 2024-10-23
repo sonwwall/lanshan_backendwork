@@ -1,0 +1,14 @@
+package main
+
+import (
+	"fmt"
+	"math"
+)
+
+func main() {
+	fmt.Println(ss(2))
+}
+func ss(r float64) float64 {
+	var s float64 = r * r * math.Pi
+	return s
+}
