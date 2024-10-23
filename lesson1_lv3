@@ -1,0 +1,19 @@
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	fmt.Println(judge(211))
+}
+func judge(i int) string {
+	var result = "yes"
+	for j := 0; j < i-2; j++ {
+		if i%(j+2) == 0 {
+			result = "no"
+			break
+		}
+	}
+	return result
+}
