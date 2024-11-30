@@ -49,3 +49,5 @@ func (tw *timestampWriter) Write(p []byte) (n int, err error) {
 	// 将日志信息写入到文件
 	return tw.logFile.Write([]byte(logMessage))
 }
+
+//这个程序有点写不上来，用ai帮了下忙，现在也只是能勉强看懂
