@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>抽奖系统</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+    }
+    .container {
+      width: 80%;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .button {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #0056b3;
+    }
+    .response {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #e9ecef;
+      border-radius: 5px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group input {
+      padding: 8px;
+      width: 200px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>欢迎来到抽奖系统</h1>
+
+  <!-- 功能选择按钮 -->
+  <button class="button" id="newlotteryBtn">开始抽奖</button>
+  <button class="button" id="querylotteryBtn">查询抽奖记录</button>
+  <button class="button" id="queryAllBtn">查询所有记录</button>
+  <button class="button" id="deleteBtn">删除记录</button>
+  <button class="button" id="deleteAllBtn">删除所有记录</button>
+
+  <!-- 抽奖结果 -->
+  <div id="lotteryResult" class="response" style="display: none;"></div>
+
+  <!-- 查询抽奖记录 -->
+  <div id="querySection" style="display: none;">
+    <div class="form-group">
+      <label for="num">请输入查询次数 (ID):</label>
+      <input type="text" id="num" placeholder="请输入ID">
+    </div>
+    <button class="button" id="queryBtn">查询</button>
+    <div id="queryResult" class="response" style="display: none;"></div>
+  </div>
+
+  <!-- 查询所有记录 -->
+  <div id="queryAllSection" class="response" style="display: none;"></div>
+</div>
+
+<script>
+  // 获取DOM元素
+  const newlotteryBtn = document.getElementById('newlotteryBtn');
+  const querylotteryBtn = document.getElementById('querylotteryBtn');
+  const queryAllBtn = document.getElementById('queryAllBtn');
+  const deleteBtn = document.getElementById('deleteBtn');
+  const deleteAllBtn = document.getElementById('deleteAllBtn');
+  const lotteryResult = document.getElementById('lotteryResult');
+  const querySection = document.getElementById('querySection');
+  const queryBtn = document.getElementById('queryBtn');
+  const numInput = document.getElementById('num');
+  const queryResult = document.getElementById('queryResult');
+  const queryAllSection = document.getElementById('queryAllSection');
+
+  // 点击“开始抽奖”按钮，发起抽奖请求
+  newlotteryBtn.addEventListener('click', () => {
+    fetch('http://localhost:8080/lottery?method=newlottery', {
+      method: 'POST'
+    })
+            .then(response => response.json())
+            .then(data => {
+              lotteryResult.style.display = 'block';
+              lotteryResult.textContent = data.msg; // 显示抽奖结果
+            })
+            .catch(error => {
+              lotteryResult.style.display = 'block';
+              lotteryResult.textContent = "发生错误，请稍后再试！";
+            });
+  });
+
+  // 点击“查询抽奖记录”按钮，显示查询输入框
+  querylotteryBtn.addEventListener('click', () => {
+    querySection.style.display = 'block';
+  });
+
+  // 点击“查询”按钮，发送查询请求
+  // 点击“查询”按钮，发送查询请求
+  queryBtn.addEventListener("click", () => {
+    const num = numInput.value.trim();
+
+    if (!num) {
+      alert("请输入查询次数！");
+      return;
+    }
+
+    // 使用请求头发送查询 ID
+    fetch("http://localhost:8080/lottery/query", {
+      method: "POST",
+      headers: {
+        num: num,
+      },
+    })
+            .then((response) => {
+              if (!response.ok) {
+                // 如果状态码不是 200，处理错误
+                if (response.status === 404) {
+                  queryResult.style.display = "block";
+                  queryResult.textContent = "没有找到相关记录";
+                } else {
+                  queryResult.style.display = "block";
+                  queryResult.textContent = "发生错误，请稍后再试！";
+                }
+                return null;
+              }
+              return response.json(); // 解析 JSON 数据
+            })
+            .then((data) => {
+              if (data) {
+                queryResult.style.display = "block";
+                queryResult.textContent = data.msg.join(" "); // 显示查询结果
+              }
+            })
+            .catch((error) => {
+              queryResult.style.display = "block";
+              queryResult.textContent = "发生错误，请稍后再试！";
+            });
+  });
+
+
+  // 点击“查询所有记录”按钮，发送查询所有记录请求
+  queryAllBtn.addEventListener('click', () => {
+    fetch('http://localhost:8080/lottery?method=query_all', {
+      method: 'POST'
+    })
+            .then(response => response.json())
+            .then(data => {
+              if (data.result) {
+                queryAllSection.style.display = 'block';
+                queryAllSection.innerHTML = '<h3>所有记录:</h3>';
+                data.result.forEach(record => {
+                  queryAllSection.innerHTML += `
+              <p>ID: ${record.id}, 结果: ${record.results}, 时间: ${record.created}</p>
+            `;
+                });
+              } else {
+                queryAllSection.style.display = 'block';
+                queryAllSection.textContent = "没有记录！";
+              }
+            })
+            .catch(error => {
+              queryAllSection.style.display = 'block';
+              queryAllSection.textContent = "查询所有记录失败，请稍后再试！";
+            });
+  });
+
+  // 点击“删除记录”按钮，显示删除操作（可扩展删除逻辑）
+  deleteBtn.addEventListener('click', () => {
+    const num = prompt("请输入要删除的记录ID:");
+    if (!num) {
+      alert("记录ID不能为空！");
+      return;
+    }
+
+    fetch('http://localhost:8080/lottery/delete', {
+      method: 'POST',
+      headers: {
+        'num': num
+      }
+    })
+            .then(response => response.json())
+            .then(data => {
+              alert(data.msg);
+            })
+            .catch(error => {
+              alert("删除记录失败，请稍后再试！");
+            });
+  });
+
+  // 点击“删除所有记录”按钮，发送删除所有记录请求
+  deleteAllBtn.addEventListener('click', () => {
+    if (!confirm("确定要删除所有记录吗？此操作不可恢复！")) {
+      return;
+    }
+
+    fetch('http://localhost:8080/lottery?method=delete_all', {
+      method: 'POST'
+    })
+            .then(response => response.json())
+            .then(data => {
+              alert(data.msg); // 显示删除结果
+              queryAllSection.style.display = 'none'; // 清空查询所有记录的显示
+            })
+            .catch(error => {
+              alert("删除所有记录失败，请稍后再试！");
+            });
+  });
+</script>
+
+</body>
+</html>
